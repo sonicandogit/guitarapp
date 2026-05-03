@@ -271,7 +271,7 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
 
 <div id="dp-cof" style="display:none"><div class="panel"><div class="cl" style="margin-bottom:4px">Círculo de quintas</div><div class="cof-wrap"><svg id="cof-svg" width="300" height="300" viewBox="0 0 300 300"></svg></div><div class="cof-info" id="cof-info">Toca una nota para ver su info</div></div></div>
 
-<div id="dp-prog" style="display:none"><div class="panel"><div class="cl" style="margin-bottom:6px">Constructor de progresiones</div><div class="row" style="margin-bottom:6px"><div class="cg"><div class="cl">Tonalidad</div><div class="btns" id="prog-key-btns"></div></div><div class="cg"><div class="cl">Modo</div><div class="btns" id="prog-mode-btns"></div></div></div><div class="cl" style="margin-bottom:4px">Añadir grado</div><div class="prog-deg-picker" id="prog-deg-picker"></div><div class="cl" style="margin:8px 0 4px">Progresión actual</div><div class="prog-slots" id="prog-slots"></div><div class="prog-controls"><button class="btn" id="prog-play-btn">&#9658; Reproducir</button><button class="btn" id="prog-clear-btn" style="border-color:#5a2a18;color:#c86040">&#x2715; Limpiar</button></div><div class="prog-play-bar" id="prog-play-bar" style="display:none"><div class="prog-cur" id="prog-cur-chord">&#x2014;</div><div class="prog-dots" id="prog-dots"></div></div></div></div>
+<div id="dp-prog" style="display:none"><div class="panel"><div class="cl" style="margin-bottom:6px">Constructor de progresiones</div><div class="row" style="margin-bottom:6px"><div class="cg"><div class="cl">Tonalidad</div><div class="btns" id="prog-key-btns"></div></div><div class="cg"><div class="cl">Modo</div><div class="btns" id="prog-mode-btns"></div></div></div><div class="cl" style="margin-bottom:4px">Añadir grado</div><div class="prog-deg-picker" id="prog-deg-picker"></div><div class="cl" style="margin:8px 0 4px">Progresión actual</div><div class="prog-slots" id="prog-slots"></div><div class="prog-controls"><button class="btn" id="prog-play-btn">&#9658; Reproducir</button><button class="btn" id="prog-clear-btn" style="border-color:#5a2a18;color:#c86040">&#x2715; Limpiar</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px"><div class="cl" style="margin-bottom:0">Compases por acorde:</div><div class="btns" id="prog-beats-btns"></div><div style="font-size:10px;color:#4a3a20" id="prog-timing-lbl"></div></div><div class="prog-play-bar" id="prog-play-bar" style="display:none"><div class="prog-cur" id="prog-cur-chord">&#x2014;</div><div class="prog-dots" id="prog-dots"></div></div></div></div>
 
 <div id="dp-transp" style="display:none"><div class="panel"><div class="cl" style="margin-bottom:6px">Transpositor</div><div class="row"><div class="cg"><div class="cl">De</div><div class="btns" id="tr-from-btns"></div></div></div><div class="row"><div class="cg"><div class="cl">A</div><div class="btns" id="tr-to-btns"></div></div></div><div style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap"><input class="pre-input" id="tr-input" placeholder="Am C G Em…" style="max-width:100%;flex:1"><button class="btn" id="tr-btn">Transponer</button></div><div id="tr-result"></div></div></div>
 
@@ -398,7 +398,7 @@ var st = {
   caged:{sel:-1}, para:{sc2:0},
   metro:{bpm:120,sig:4,beat:0,actx:null},
   ft:{caged:false,para:false,metro:false,harm:false,digit:false,ext:false,tuner:false,cof:false,prog:false,transp:false,subs:false,timer:false,arp:false},
-  harm:{root:0,mode:0}, prog:{key:0,mode:0,slots:[],playing:false,step:0},
+  harm:{root:0,mode:0}, prog:{key:0,mode:0,slots:[],playing:false,step:0,beats:2},
   transp:{from:0,to:7}, subs:{key:0,mode:0}, arp:{sel:0}
 };
 
@@ -752,10 +752,141 @@ var PROG_DEG_MIN=[{r:'Im',q:'m',fn:'ton'},{r:'IIdim',q:'dim',fn:'sub'},{r:'bIII'
 function progChordName(keyIdx,degIdx,isMaj){var degs=isMaj?PROG_DEG_MAJ:PROG_DEG_MIN,ints=isMaj?MAJ_INT:MIN_INT,deg=degs[degIdx],noteIdx=(keyIdx+ints[degIdx])%12,useFl=FLAT_KEYS.indexOf(keyIdx)>=0,noteName=useFl?NB[noteIdx]:N[noteIdx];return noteName+(deg.q==='7'?'7':deg.q==='dim'?'dim':deg.q==='m'?'m':'');}
 function bldProgDegPicker(){var isMaj=st.prog.mode===0,degs=isMaj?PROG_DEG_MAJ:PROG_DEG_MIN,el=document.getElementById('prog-deg-picker');el.innerHTML='';for(var i=0;i<7;i++){var name=progChordName(st.prog.key,i,isMaj),b=document.createElement('button');b.className='btn';b.textContent=degs[i].r+' \u2014 '+name;b.dataset.di=i;el.appendChild(b);}}
 function renderProgSlots(){var el=document.getElementById('prog-slots'),isMaj=st.prog.mode===0,degs=isMaj?PROG_DEG_MAJ:PROG_DEG_MIN;if(!st.prog.slots.length){el.innerHTML='<span style="font-size:11px;color:#3a2e18">A\xf1ade acordes arriba</span>';return;}var h='';for(var i=0;i<st.prog.slots.length;i++){var s=st.prog.slots[i],name=progChordName(st.prog.key,s,isMaj);h+='<div class="prog-slot'+(st.prog.playing&&st.prog.step===i?' active':'')+'" data-pi="'+i+'"><span class="prog-slot-deg">'+degs[s].r+'</span><span class="prog-slot-name">'+name+'</span><button class="prog-slot-del" data-di="'+i+'">\xd7</button></div>';}el.innerHTML=h;el.onclick=function(e){if(e.target.classList.contains('prog-slot-del')){var idx=parseInt(e.target.getAttribute('data-di'),10);st.prog.slots.splice(idx,1);renderProgSlots();}};}
+// ── Audio de progresiones ─────────────────────────────────────
+// ── Audio progresiones ────────────────────────────────────────
+// Shared AudioContext — same one used by metronome (st.metro.actx)
+function getSharedCtx(){
+  var AC2=window.AudioContext||window.webkitAudioContext;
+  if(!AC2) return null;
+  if(!st.metro.actx||st.metro.state==='closed') st.metro.actx=new AC2();
+  return st.metro.actx;
+}
+
+function midiToHz(m){ return 440*Math.pow(2,(m-69)/12); }
+
+function playProgChord(rootIdx, chIntervals){
+  try{
+    var ctx=getSharedCtx(); if(!ctx) return;
+    if(ctx.state==='suspended'){ ctx.resume(); }
+    var now=ctx.currentTime+0.05;
+
+    // Guitar-like sound: sawtooth + bandpass + waveshaper + strum
+    var beatDur=(60/st.metro.bpm)*st.metro.sig*st.prog.beats;
+    var susTime=Math.min(beatDur*0.85, 3.0);
+
+    // Master bus
+    var master=ctx.createGain();
+    master.gain.setValueAtTime(0.001, now);
+    master.gain.linearRampToValueAtTime(0.45, now+0.04);
+    master.gain.setValueAtTime(0.45, now+susTime*0.7);
+    master.gain.exponentialRampToValueAtTime(0.001, now+susTime);
+    master.connect(ctx.destination);
+
+    // Waveshaper for guitar-like harmonic distortion
+    var ws=ctx.createWaveShaper();
+    var curve=new Float32Array(256);
+    for(var i=0;i<256;i++){
+      var x=i*2/256-1;
+      curve[i]=x*(3+12)/(1+12*Math.abs(x));
+    }
+    ws.curve=curve;
+    ws.connect(master);
+
+    // Bass root note
+    var bassRoot=40+((rootIdx-4+12)%12);
+    while(bassRoot<36) bassRoot+=12;
+    while(bassRoot>52) bassRoot-=12;
+
+    var notes=[bassRoot];
+    var midBase=bassRoot+12;
+    for(var i=0;i<chIntervals.length;i++){
+      var mn=midBase+chIntervals[i];
+      if(mn>76) mn-=12;
+      notes.push(mn);
+    }
+
+    // Each string: sawtooth + bandpass (guitar body resonance)
+    for(var ni=0;ni<notes.length;ni++){
+      (function(freq, t0, isBass){
+        // Two detuned oscillators per note for richness
+        for(var d=0;d<2;d++){
+          var osc=ctx.createOscillator();
+          var gain=ctx.createGain();
+          var bp=ctx.createBiquadFilter();
+          bp.type='bandpass';
+          bp.frequency.value=freq*(isBass?2:3);
+          bp.Q.value=1.5;
+          osc.type='sawtooth';
+          osc.frequency.value=freq*(d===0?1:1.003); // slight detune
+          var att=isBass?0.025:0.012;
+          gain.gain.setValueAtTime(0.001,t0);
+          gain.gain.linearRampToValueAtTime(isBass?0.55:0.35,t0+att);
+          gain.gain.exponentialRampToValueAtTime(0.001,t0+susTime*(isBass?0.9:0.8));
+          osc.connect(bp);
+          bp.connect(gain);
+          gain.connect(ws);
+          osc.start(t0);
+          osc.stop(t0+susTime+0.1);
+        }
+      })(midiToHz(notes[ni]), now+ni*0.028, ni===0);
+    }
+  }catch(e){}
+}
+
 var progIv=null;
-function startProg(){if(!st.prog.slots.length)return;st.prog.playing=true;st.prog.step=0;document.getElementById('prog-play-bar').style.display='flex';var ms=Math.round(60000/st.metro.bpm)*2;function tick(){var isMaj=st.prog.mode===0,name=progChordName(st.prog.key,st.prog.slots[st.prog.step],isMaj);document.getElementById('prog-cur-chord').textContent=name;var dots='';for(var i=0;i<st.prog.slots.length;i++)dots+='<div class="prog-dot'+(i===st.prog.step?' on':'')+'"></div>';document.getElementById('prog-dots').innerHTML=dots;var ints=isMaj?MAJ_INT:MIN_INT,degIdx=st.prog.slots[st.prog.step];st.root=(st.prog.key+ints[degIdx])%12;bldRoot();rAll();renderProgSlots();st.prog.step=(st.prog.step+1)%st.prog.slots.length;progIv=setTimeout(tick,ms);}tick();document.getElementById('prog-play-btn').textContent='\u25a0 Detener';}
-function stopProg(){if(progIv)clearTimeout(progIv);progIv=null;st.prog.playing=false;document.getElementById('prog-play-btn').textContent='\u25b6 Reproducir';document.getElementById('prog-play-bar').style.display='none';renderProgSlots();}
-function renderProg(){if(!st.ft.prog)return;bldProgKeyBtns();bldProgModeBtns();bldProgDegPicker();renderProgSlots();}
+function startProg(){
+  if(!st.prog.slots.length) return;
+  // Create/unlock AudioContext on user gesture (required on mobile)
+  var ctx=getSharedCtx();
+  if(ctx&&ctx.state==='suspended') ctx.resume();
+  st.prog.playing=true; st.prog.step=0;
+  document.getElementById('prog-play-bar').style.display='flex';
+  var bpm=st.metro.bpm, sig=st.metro.sig;
+  var ms=Math.round(60000/bpm)*st.metro.sig*st.prog.beats;
+  function tick(){
+    var isMaj=st.prog.mode===0;
+    var ints=isMaj?MAJ_INT:MIN_INT;
+    var degIdx=st.prog.slots[st.prog.step];
+    var chordRoot=(st.prog.key+ints[degIdx])%12;
+    var name=progChordName(st.prog.key,degIdx,isMaj);
+    document.getElementById('prog-cur-chord').textContent=name;
+    var dots='';
+    for(var i=0;i<st.prog.slots.length;i++)
+      dots+='<div class="prog-dot'+(i===st.prog.step?' on':'')+'"></div>';
+    document.getElementById('prog-dots').innerHTML=dots;
+    st.root=chordRoot; bldRoot(); rAll(); renderProgSlots();
+    var deg=isMaj?PROG_DEG_MAJ[degIdx]:PROG_DEG_MIN[degIdx];
+    var chKey=deg.q==='m'?'Menor':deg.q==='dim'?'Dim':deg.q==='7'?'Dom 7':'Mayor';
+    playProgChord(chordRoot, CH[chKey]||[0,4,7]);
+    st.prog.step=(st.prog.step+1)%st.prog.slots.length;
+    progIv=setTimeout(tick,ms);
+  }
+  tick();
+  document.getElementById('prog-play-btn').textContent='\u25a0 Detener';
+}
+function stopProg(){
+  if(progIv)clearTimeout(progIv);progIv=null;st.prog.playing=false;
+  document.getElementById('prog-play-btn').textContent='\u25b6 Reproducir';
+  document.getElementById('prog-play-bar').style.display='none';
+  renderProgSlots();
+}
+function bldProgBeatsBtns(){
+  var el=document.getElementById('prog-beats-btns'); if(!el) return;
+  el.innerHTML='';
+  [1,2,4,8].forEach(function(b){
+    var btn=document.createElement('button');
+    btn.className='btn'+(st.prog.beats===b?' bon':'');
+    btn.textContent=b+(b===1?' compás':' compases');
+    btn.dataset.pb=b;
+    el.appendChild(btn);
+  });
+  var lbl=document.getElementById('prog-timing-lbl');
+  if(lbl){
+    var secs=(60/st.metro.bpm)*st.metro.sig*st.prog.beats;
+    lbl.textContent=secs.toFixed(1)+'s por acorde @ '+st.metro.bpm+' bpm';
+  }
+}
+function renderProg(){if(!st.ft.prog)return;bldProgKeyBtns();bldProgModeBtns();bldProgDegPicker();renderProgSlots();bldProgBeatsBtns();}
 function bldProgKeyBtns(){var el=document.getElementById('prog-key-btns');el.innerHTML='';for(var i=0;i<N.length;i++){var b=document.createElement('button');b.className='btn'+(st.prog.key===i?' bon':'');b.textContent=N[i];b.dataset.pk=i;el.appendChild(b);}}
 function bldProgModeBtns(){var el=document.getElementById('prog-mode-btns');el.innerHTML='';['Mayor','Menor'].forEach(function(m,i){var b=document.createElement('button');b.className='btn'+(st.prog.mode===i?' bbl':'');b.textContent=m;b.dataset.pm=i;el.appendChild(b);});}
 
@@ -1010,6 +1141,11 @@ function attachListeners(){
   document.getElementById('prog-mode-btns').addEventListener('click',function(e){var pm=e.target.dataset.pm;if(pm===undefined)return;st.prog.mode=parseInt(pm,10);bldProgModeBtns();bldProgDegPicker();renderProgSlots();});
   document.getElementById('prog-deg-picker').addEventListener('click',function(e){var di=e.target.dataset.di;if(di===undefined)return;if(st.prog.slots.length<16)st.prog.slots.push(parseInt(di,10));renderProgSlots();});
   document.getElementById('prog-play-btn').addEventListener('click',function(){if(st.prog.playing)stopProg();else startProg();});
+  document.getElementById('prog-beats-btns').addEventListener('click',function(e){
+    var pb=e.target.dataset.pb; if(pb===undefined) return;
+    st.prog.beats=parseInt(pb,10); bldProgBeatsBtns();
+    if(st.prog.playing){stopProg();startProg();}
+  });
   document.getElementById('prog-clear-btn').addEventListener('click',function(){stopProg();st.prog.slots=[];renderProgSlots();});
   // Transpositor
   document.getElementById('tr-from-btns').addEventListener('click',function(e){var trf=e.target.dataset.trf;if(trf===undefined)return;st.transp.from=parseInt(trf,10);bldTrBtns();});

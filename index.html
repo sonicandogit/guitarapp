@@ -1357,10 +1357,9 @@ function renderIdent(){
 var PIANO_DOTS={};  // piano instrument identifier dots (pitch class → true)
 var COMP_DOTS={};   // comparador shared dots (pitch class → true)
 
-function buildPianoSVG(numOct, dotsObj, onClickCb, svgEl){
-  // numOct: number of octaves
-  // dotsObj: {pitchClass: true} for identifier mode (null = chord/scale display only)
-  // onClickCb: function(pc) called when key clicked (null = read-only)
+function buildPianoSVG(numOct, dotsObj, onClickCb, svgEl, identMode){
+  // identMode=true: no chord/scale background, show only dotsObj dots
+  // dotsObj: null = read-only display; object = identifier dots
   var ivs=gI(), ri=st.root;
   var WW=28, WH=130, BW=18, BH=80, PAD=10, TOP=22;
   var WHITE=[0,2,4,5,7,9,11];
@@ -1382,8 +1381,9 @@ function buildPianoSVG(numOct, dotsObj, onClickCb, svgEl){
       var iv=(pc-ri+12)%12;
       var inCh=ivs.indexOf(iv)>=0;
       var isId=dotsObj&&!!(dotsObj[oct+'_'+pc]||dotsObj[pc]);
+      var inCh=!identMode&&ivs.indexOf((pc-ri+12)%12)>=0;
       var x=PAD+(oct*7+wi)*WW;
-      var fill=isId?'#e8a020':(inCh?IC[iv]:'#ede8e0');
+      var fill=isId?'#e8a020':(inCh?IC[(pc-ri+12)%12]:'#ede8e0');
       var strokeC=inCh&&!isId?IC[iv]:'#555';
       h+='<rect x="'+x+'" y="'+TOP+'" width="'+(WW-1)+'" height="'+WH+'" rx="3" fill="'+fill+'" stroke="'+strokeC+'" stroke-width="'+(inCh&&!isId?1.5:0.5)+'" data-pc="'+pc+'" data-oct="'+oct+'"'+(onClickCb?' class="pkey"':'')+'/>';
       if(inCh||isId){
@@ -1398,7 +1398,7 @@ function buildPianoSVG(numOct, dotsObj, onClickCb, svgEl){
     for(var bi=0;bi<5;bi++){
       var bpc=BLACK[bi];
       var biv=(bpc-ri+12)%12;
-      var bInCh=ivs.indexOf(biv)>=0;
+      var bInCh=!identMode&&ivs.indexOf(biv)>=0;
       var bIsId=dotsObj&&!!(dotsObj[oct2+'_'+bpc]||dotsObj[bpc]);
       var bx=PAD+(oct2*7+BPOS[bi])*WW-BW/2;
       var bfill=bIsId?'#e8a020':(bInCh?IC[biv]:'#1a1612');
@@ -1728,7 +1728,7 @@ function renderCompIdentPage(){
     if(svg) buildPianoSVG(7, COMP_DOTS, function(pc){
       if(COMP_DOTS[pc]) delete COMP_DOTS[pc]; else COMP_DOTS[pc]=true;
       renderCompIdentAll();
-    }, svg);
+    }, svg, true); // identMode=true: clean piano, no chord colors
   }catch(e){}
   updateCompIdentResult();
 }
@@ -1740,32 +1740,35 @@ function renderCompIdentFB(){
   var BW=OW+nf*FW, SW=FB_ML+BW+FB_MR, SH=FB_MT+BH+FB_ML;
   function cx(f){return f===0?FB_ML+OW/2:FB_ML+OW+(f-.5)*FW;}
   function sy(s){return FB_MT+s*FB_SS;}
-  var ivs=gI(), ri=st.root;
   var h='<defs><filter id="glF"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
   h+='<rect x="'+FB_ML+'" y="'+FB_MT+'" width="'+BW+'" height="'+BH+'" fill="#17110a" rx="2"/>';
   var marks=[3,5,7,9,12];
   for(var mi=0;mi<marks.length;mi++){var mm=marks[mi];var mc=cx(mm),mcy=FB_MT+BH/2;if(mm===12){h+='<circle cx="'+mc+'" cy="'+(mcy-12)+'" r="4" fill="#231a0d"/><circle cx="'+mc+'" cy="'+(mcy+12)+'" r="4" fill="#231a0d"/>';}else h+='<circle cx="'+mc+'" cy="'+mcy+'" r="4" fill="#231a0d"/>';}
   h+='<line x1="'+(FB_ML+OW)+'" y1="'+FB_MT+'" x2="'+(FB_ML+OW)+'" y2="'+(FB_MT+BH)+'" stroke="#c4a070" stroke-width="4"/>';
-  for(var fi=1;fi<=nf;fi++){var fx=FB_ML+OW+fi*FW;h+='<line x1="'+fx+'" y1="'+FB_MT+'" x2="'+fx+'" y2="'+(FB_MT+BH)+'" stroke="#5a4528" stroke-width="1.4" opacity=".7"/>';}
+  for(var fi=1;fi<=nf;fi++){var ffx=FB_ML+OW+fi*FW;h+='<line x1="'+ffx+'" y1="'+FB_MT+'" x2="'+ffx+'" y2="'+(FB_MT+BH)+'" stroke="#5a4528" stroke-width="1.4" opacity=".7"/>';}
   h+='<line x1="'+FB_ML+'" y1="'+FB_MT+'" x2="'+(FB_ML+BW)+'" y2="'+FB_MT+'" stroke="#2e1f0f" stroke-width="1"/>';
   h+='<line x1="'+FB_ML+'" y1="'+(FB_MT+BH)+'" x2="'+(FB_ML+BW)+'" y2="'+(FB_MT+BH)+'" stroke="#2e1f0f" stroke-width="1"/>';
   for(var mi2=0;mi2<marks.length;mi2++)h+='<text x="'+cx(marks[mi2])+'" y="'+(FB_MT-8)+'" text-anchor="middle" font-size="10" fill="#5a3e20">'+marks[mi2]+'</text>';
   h+='<text x="'+cx(0)+'" y="'+(FB_MT-8)+'" text-anchor="middle" font-size="9" fill="#3a2810">0</text>';
   for(var si=0;si<ns;si++){var ssy=sy(si),th=0.7+(ns-1-si)*.28/(ns-1)*1.5,sc=si===0?'#dcd0a0':si===ns-1?'#b8a050':'#c8b868';h+='<line x1="'+FB_ML+'" y1="'+ssy+'" x2="'+(FB_ML+BW)+'" y2="'+ssy+'" stroke="'+sc+'" stroke-width="'+th+'" opacity=".9"/>';h+='<text x="'+(FB_ML-6)+'" y="'+(ssy+3.5)+'" text-anchor="end" font-size="9" fill="#4a3020">'+(si+1)+'</text>';h+='<text x="'+(FB_ML-6)+'" y="'+(ssy+13)+'" text-anchor="end" font-size="8" fill="#321e08">'+compT[si]+'</text>';}
-  // Chord/scale notes + COMP_DOTS overlay + hit areas
+  // CLEAN fretboard: only COMP_DOTS (no chord/scale background) + hit areas
   for(var si2=0;si2<ns;si2++){
     var y2=sy(si2),sNI=N.indexOf(compT[si2]);
+    // First pass: COMP_DOTS circles
     for(var f=0;f<=nf;f++){
       var pc=(sNI+f)%12;
-      var iv=(pc-ri+12)%12;
-      var inCh=ivs.indexOf(iv)>=0;
-      var isId=!!COMP_DOTS[pc];
-      var cx2=cx(f);
-      if(inCh){var col=IC[iv],isR=iv===0,r=isR?12:11;if(isR)h+='<circle cx="'+cx2+'" cy="'+y2+'" r="'+(r+5)+'" fill="'+col+'" opacity=".15"/>';h+='<circle cx="'+cx2+'" cy="'+y2+'" r="'+r+'" fill="'+col+'" opacity="'+(isId?.4:.83)+'" filter="'+(isR?'url(#glF)':'none')+'"/>';if(!isId){var lbl=IN[iv],fs=lbl.length>1?7:9;h+='<text x="'+cx2+'" y="'+(y2+fs*.4)+'" text-anchor="middle" font-size="'+fs+'" font-weight="bold" fill="'+(isR?'#1a0e00':'#fff')+'">'+lbl+'</text>';}}
-      if(isId){h+='<circle cx="'+cx2+'" cy="'+y2+'" r="13" fill="#e8a020" opacity=".9"/>';h+='<circle cx="'+cx2+'" cy="'+y2+'" r="13" fill="none" stroke="#fff" stroke-width="1.5" opacity=".4"/>';h+='<text x="'+cx2+'" y="'+(y2+4)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#1a0e00">'+N[pc]+'</text>';}
-      // Hit area (always on top)
-      var FW2=60;
-      h+='<rect x="'+(f===0?FB_ML:cx2-FW2/2)+'" y="'+(y2-FB_SS/2)+'" width="'+FW2+'" height="'+FB_SS+'" fill="transparent" data-pc="'+pc+'" class="citap"/>';
+      if(COMP_DOTS[pc]){
+        var cx2=cx(f);
+        h+='<circle cx="'+cx2+'" cy="'+y2+'" r="14" fill="#e8a020" opacity=".95" filter="url(#glF)"/>';
+        h+='<circle cx="'+cx2+'" cy="'+y2+'" r="14" fill="none" stroke="#fff" stroke-width="1.5" opacity=".4"/>';
+        h+='<text x="'+cx2+'" y="'+(y2+4)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#1a0e00">'+N[pc]+'</text>';
+      }
+    }
+    // Second pass: transparent hit areas on top
+    for(var f2=0;f2<=nf;f2++){
+      var pc2=(sNI+f2)%12;
+      var cx3=cx(f2);
+      h+='<rect x="'+(f2===0?FB_ML:cx3-FW/2)+'" y="'+(y2-FB_SS/2)+'" width="'+FW+'" height="'+FB_SS+'" fill="transparent" data-pc="'+pc2+'" class="citap"/>';
     }
   }
   svg.setAttribute('viewBox','0 0 '+SW+' '+SH);
@@ -1785,7 +1788,7 @@ function renderCompIdentAll(){
   if(svg) buildPianoSVG(7, COMP_DOTS, function(pc){
     if(COMP_DOTS[pc]) delete COMP_DOTS[pc]; else COMP_DOTS[pc]=true;
     renderCompIdentAll();
-  }, svg);
+  }, svg, true);
   updateCompIdentResult();
 }
 
@@ -1850,9 +1853,9 @@ function attachListeners(){
     renderCompIdentPage();
   });
   document.getElementById('cm-clear').addEventListener('click',function(){
-    COMP_DOTS={}; PIANO_DOTS={};
-    renderCompPage();
-    renderPianoPanel();
+    COMP_DOTS={};
+    if(COMP_MODULE==='ident') renderCompIdentAll();
+    else renderCompChords();
   });
   // Instrument selector
   document.getElementById('inst-sel').addEventListener('click',function(e){var b=e.target.closest('[data-inst]');if(!b)return;switchInst(parseInt(b.getAttribute('data-inst'),10));});

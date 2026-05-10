@@ -270,7 +270,6 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
   <div id="piano-ident" style="margin-top:10px;min-height:40px"></div>
 </div>
 <div class="fbw-hint">&#x2190; desliza el mástil &#x2192;</div>
-</div><!-- end page-instrument -->
 
 <div id="dp-metro" style="display:none"><div class="panel"><div class="metro-grid"><div class="cg"><div class="cl">Tempo</div><div class="metro-bpm-row"><input type="range" min="40" max="240" value="120" id="bsl"><span style="font-size:18px;font-weight:500;min-width:38px;color:#e8a020" id="bdis">120</span></div></div><div class="cg"><div class="cl">Compás</div><div class="btns" id="sigb"></div></div><div class="cg" style="flex:1;min-width:100px"><div class="cl">&nbsp;</div><button class="btn" id="mbt" style="width:100%">&#9658; Iniciar</button></div><div class="cg" style="flex:1;min-width:100px"><div class="cl">&nbsp;</div><button class="btn" id="tap-btn" style="width:100%;border-color:#5a5010;color:#c8c060">&#x1F442; Tap</button></div></div><div class="beats" id="bts"></div><div style="text-align:center;font-size:11px;color:#5a4a2a;margin-top:2px" id="bplbl">120 bpm</div></div></div>
 
@@ -324,6 +323,7 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
 </div></div>
 
 
+</div><!-- end page-instrument -->
 <div id="page-comp" style="display:none">
   <!-- Module selector -->
   <div class="comp-mods">
@@ -1355,7 +1355,8 @@ function renderIdent(){
 // ── Event delegation ──────────────────────────────────────────
 // ── Shared piano renderer (generalized) ───────────────────────
 var PIANO_DOTS={};  // piano instrument identifier dots (pitch class → true)
-var COMP_DOTS={};   // comparador shared dots (pitch class → true)
+var COMP_DOTS={};   // comparador piano dots (oct_pc → true)
+var COMP_FB_DOTS={}; // comparador fretboard dots (string_fret → true)
 
 function buildPianoSVG(numOct, dotsObj, onClickCb, svgEl, identMode){
   // identMode=true: no chord/scale background, show only dotsObj dots
@@ -1380,7 +1381,7 @@ function buildPianoSVG(numOct, dotsObj, onClickCb, svgEl, identMode){
       var pc=WHITE[wi];
       var iv=(pc-ri+12)%12;
       var inCh=ivs.indexOf(iv)>=0;
-      var isId=dotsObj&&!!(dotsObj[oct+'_'+pc]||dotsObj[pc]);
+      var isId=dotsObj&&!!(dotsObj[oct+'_'+pc]);
       var inCh=!identMode&&ivs.indexOf((pc-ri+12)%12)>=0;
       var x=PAD+(oct*7+wi)*WW;
       var fill=isId?'#e8a020':(inCh?IC[(pc-ri+12)%12]:'#ede8e0');
@@ -1399,7 +1400,7 @@ function buildPianoSVG(numOct, dotsObj, onClickCb, svgEl, identMode){
       var bpc=BLACK[bi];
       var biv=(bpc-ri+12)%12;
       var bInCh=!identMode&&ivs.indexOf(biv)>=0;
-      var bIsId=dotsObj&&!!(dotsObj[oct2+'_'+bpc]||dotsObj[bpc]);
+      var bIsId=dotsObj&&!!(dotsObj[oct2+'_'+bpc]);
       var bx=PAD+(oct2*7+BPOS[bi])*WW-BW/2;
       var bfill=bIsId?'#e8a020':(bInCh?IC[biv]:'#1a1612');
       h+='<rect x="'+bx+'" y="'+TOP+'" width="'+BW+'" height="'+BH+'" rx="2" fill="'+bfill+'" stroke="#000" stroke-width="0.5" data-pc="'+bpc+'" data-oct="'+oct2+'"'+(onClickCb?' class="pkey"':'')+'/>';
@@ -1751,24 +1752,24 @@ function renderCompIdentFB(){
   for(var mi2=0;mi2<marks.length;mi2++)h+='<text x="'+cx(marks[mi2])+'" y="'+(FB_MT-8)+'" text-anchor="middle" font-size="10" fill="#5a3e20">'+marks[mi2]+'</text>';
   h+='<text x="'+cx(0)+'" y="'+(FB_MT-8)+'" text-anchor="middle" font-size="9" fill="#3a2810">0</text>';
   for(var si=0;si<ns;si++){var ssy=sy(si),th=0.7+(ns-1-si)*.28/(ns-1)*1.5,sc=si===0?'#dcd0a0':si===ns-1?'#b8a050':'#c8b868';h+='<line x1="'+FB_ML+'" y1="'+ssy+'" x2="'+(FB_ML+BW)+'" y2="'+ssy+'" stroke="'+sc+'" stroke-width="'+th+'" opacity=".9"/>';h+='<text x="'+(FB_ML-6)+'" y="'+(ssy+3.5)+'" text-anchor="end" font-size="9" fill="#4a3020">'+(si+1)+'</text>';h+='<text x="'+(FB_ML-6)+'" y="'+(ssy+13)+'" text-anchor="end" font-size="8" fill="#321e08">'+compT[si]+'</text>';}
-  // CLEAN fretboard: only COMP_DOTS (no chord/scale background) + hit areas
+  // CLEAN fretboard: show only COMP_FB_DOTS (specific string+fret positions)
   for(var si2=0;si2<ns;si2++){
-    var y2=sy(si2),sNI=N.indexOf(compT[si2]);
-    // First pass: COMP_DOTS circles
+    var y2=sy(si2),sNI2=N.indexOf(compT[si2]);
+    // First pass: draw dots for specifically clicked positions
     for(var f=0;f<=nf;f++){
-      var pc=(sNI+f)%12;
-      if(COMP_DOTS[pc]){
+      var fbKey=si2+'_'+f;
+      if(COMP_FB_DOTS[fbKey]){
+        var pc=(sNI2+f)%12;
         var cx2=cx(f);
-        h+='<circle cx="'+cx2+'" cy="'+y2+'" r="14" fill="#e8a020" opacity=".95" filter="url(#glF)"/>';
+        h+='<circle cx="'+cx2+'" cy="'+y2+'" r="14" fill="'+IC[(pc-st.root+12)%12]+'" opacity=".95" filter="url(#glF)"/>';
         h+='<circle cx="'+cx2+'" cy="'+y2+'" r="14" fill="none" stroke="#fff" stroke-width="1.5" opacity=".4"/>';
         h+='<text x="'+cx2+'" y="'+(y2+4)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#1a0e00">'+N[pc]+'</text>';
       }
     }
     // Second pass: transparent hit areas on top
     for(var f2=0;f2<=nf;f2++){
-      var pc2=(sNI+f2)%12;
       var cx3=cx(f2);
-      h+='<rect x="'+(f2===0?FB_ML:cx3-FW/2)+'" y="'+(y2-FB_SS/2)+'" width="'+FW+'" height="'+FB_SS+'" fill="transparent" data-pc="'+pc2+'" class="citap"/>';
+      h+='<rect x="'+(f2===0?FB_ML:cx3-FW/2)+'" y="'+(y2-FB_SS/2)+'" width="'+FW+'" height="'+FB_SS+'" fill="transparent" data-s="'+si2+'" data-f="'+f2+'" class="citap"/>';
     }
   }
   svg.setAttribute('viewBox','0 0 '+SW+' '+SH);
@@ -1776,8 +1777,28 @@ function renderCompIdentFB(){
   svg.innerHTML=h;
   svg.onclick=function(e){
     var t=e.target; if(!t.classList.contains('citap')) return;
-    var pc=parseInt(t.dataset.pc,10);
-    if(COMP_DOTS[pc]) delete COMP_DOTS[pc]; else COMP_DOTS[pc]=true;
+    var si3=parseInt(t.dataset.s,10), f3=parseInt(t.dataset.f,10);
+    var fbKey2=si3+'_'+f3;
+    var compT3=['E','B','G','D','A','E'];
+    var pc3=(N.indexOf(compT3[si3])+f3)%12;
+    if(COMP_FB_DOTS[fbKey2]){
+      delete COMP_FB_DOTS[fbKey2];
+      // Remove piano pitch class only if no other fret has same pc
+      var stillUsed=false;
+      for(var k in COMP_FB_DOTS){var pts=k.split('_');var pc4=(N.indexOf(compT3[parseInt(pts[0],10)])+parseInt(pts[1],10))%12;if(pc4===pc3){stillUsed=true;break;}}
+      if(!stillUsed){
+        // Remove all piano oct+pc keys for this pitch class
+        for(var pk in COMP_DOTS){if(parseInt(pk.indexOf('_')>=0?pk.split('_')[1]:pk,10)===pc3)delete COMP_DOTS[pk];}
+      }
+    } else {
+      COMP_FB_DOTS[fbKey2]=true;
+      // Sync to piano: compute actual octave from string/fret MIDI
+      var openMIDI=[64,59,55,50,45,40]; // si=0..5 high to low
+      var midi3=openMIDI[si3]+f3;
+      var pianoOct=Math.floor((midi3-36)/12);
+      var pianoKey=pianoOct+'_'+pc3;
+      COMP_DOTS[pianoKey]=true; // sync to specific piano key
+    }
     renderCompIdentAll();
   };
 }
@@ -1794,10 +1815,22 @@ function renderCompIdentAll(){
 
 function updateCompIdentResult(){
   var el=document.getElementById('comp-ident-result'); if(!el) return;
-  var pcs=Object.keys(COMP_DOTS).map(Number);
+  // Get pitch classes from fretboard positions
+  var pcs=[];
+  var compT2=['E','B','G','D','A','E'];
+  for(var fbk in COMP_FB_DOTS){
+    var pts=fbk.split('_'), si=parseInt(pts[0]), f=parseInt(pts[1]);
+    var pc=(N.indexOf(compT2[si])+f)%12;
+    if(pcs.indexOf(pc)<0) pcs.push(pc);
+  }
+  // Get pitch classes from piano dots
+  for(var pk in COMP_DOTS){
+    var ppc=parseInt(pk.indexOf('_')>=0?pk.split('_')[1]:pk, 10);
+    if(pcs.indexOf(ppc)<0) pcs.push(ppc);
+  }
   el.innerHTML=buildIdentHTML(pcs);
   var clr=el.querySelector('#ident-clr-btn');
-  if(clr) clr.onclick=function(){COMP_DOTS={};renderCompIdentAll();};
+  if(clr) clr.onclick=function(){COMP_DOTS={};COMP_FB_DOTS={};renderCompIdentAll();};
 }
 
 // ── Utilidades page ────────────────────────────────────────────
@@ -1822,43 +1855,44 @@ function attachListeners(){
     switchPage(b.dataset.page);
   });
   // Comparador controls
-  document.getElementById('comp-rb').addEventListener('click',function(e){
+  // Comp page listeners — safe (elements inside hidden page-comp)
+  function addSafeListener(id, type, fn){
+    var el=document.getElementById(id); if(el) el.addEventListener(type, fn);
+  }
+  addSafeListener('comp-rb','click',function(e){
     var cr=e.target.dataset.cr; if(cr===undefined) return;
     st.root=parseInt(cr,10); bldCompControls(); renderCompPage();
   });
-  document.getElementById('comp-tb').addEventListener('click',function(e){
+  addSafeListener('comp-tb','click',function(e){
     var ct=e.target.dataset.ctype; if(ct===undefined) return;
-    if(parseInt(e.target.dataset.mode,10)===0) st.ct=parseInt(ct,10);
-    else st.sc=parseInt(ct,10);
+    if(parseInt(e.target.dataset.mode,10)===0) st.ct=parseInt(ct,10); else st.sc=parseInt(ct,10);
     bldCompControls(); renderCompPage();
   });
-  document.getElementById('comp-mdb').addEventListener('click',function(e){
+  addSafeListener('comp-mdb','click',function(e){
     var cm=e.target.dataset.cmode; if(cm===undefined) return;
     st.mode=parseInt(cm,10); bldCompControls(); renderCompPage();
   });
-  document.getElementById('cm-chords').addEventListener('click',function(){
+  addSafeListener('cm-chords','click',function(){
     COMP_MODULE='chords';
-    document.getElementById('cm-chords').classList.add('bon');
-    document.getElementById('cm-ident').classList.remove('bon');
-    document.getElementById('comp-mod-chords').style.display='';
-    document.getElementById('comp-mod-ident').style.display='none';
+    var cc=document.getElementById('cm-chords'),ci=document.getElementById('cm-ident');
+    if(cc)cc.classList.add('bon'); if(ci)ci.classList.remove('bon');
+    var mc=document.getElementById('comp-mod-chords'),mi=document.getElementById('comp-mod-ident');
+    if(mc)mc.style.display=''; if(mi)mi.style.display='none';
     renderCompChords();
   });
-  document.getElementById('cm-ident').addEventListener('click',function(){
+  addSafeListener('cm-ident','click',function(){
     COMP_MODULE='ident';
-    document.getElementById('cm-ident').classList.add('bon');
-    document.getElementById('cm-chords').classList.remove('bon');
-    document.getElementById('comp-mod-ident').style.display='';
-    document.getElementById('comp-mod-chords').style.display='none';
+    var cc=document.getElementById('cm-chords'),ci=document.getElementById('cm-ident');
+    if(ci)ci.classList.add('bon'); if(cc)cc.classList.remove('bon');
+    var mc=document.getElementById('comp-mod-chords'),mi=document.getElementById('comp-mod-ident');
+    if(mi)mi.style.display=''; if(mc)mc.style.display='none';
     renderCompIdentPage();
   });
-  document.getElementById('cm-clear').addEventListener('click',function(){
-    COMP_DOTS={};
-    if(COMP_MODULE==='ident') renderCompIdentAll();
-    else renderCompChords();
+  addSafeListener('cm-clear','click',function(){
+    COMP_DOTS={}; COMP_FB_DOTS={};
+    if(COMP_MODULE==='ident') renderCompIdentAll(); else renderCompChords();
   });
   // Instrument selector
-  document.getElementById('inst-sel').addEventListener('click',function(e){var b=e.target.closest('[data-inst]');if(!b)return;switchInst(parseInt(b.getAttribute('data-inst'),10));});
   // Presets
   document.getElementById('btn-save-preset').addEventListener('click',savePreset);
   document.getElementById('pre-name').addEventListener('keydown',function(e){if(e.key==='Enter')savePreset();});
@@ -1898,7 +1932,7 @@ function attachListeners(){
     if(st.prog.playing){stopProg();startProg();}
   });
   document.getElementById('prog-clear-btn').addEventListener('click',function(){stopProg();st.prog.slots=[];renderProgSlots();});
-  document.getElementById('comp-clear').addEventListener('click',function(){COMP_DOTS={};renderComp();});
+
   document.getElementById('ident-clear-btn').addEventListener('click',function(){st.ident.dots={};renderIdentFB();var r=document.getElementById('ident-results');if(r)r.innerHTML='';var n=document.getElementById('ident-notes-lbl');if(n)n.textContent='';});
   // Transpositor
   document.getElementById('tr-from-btns').addEventListener('click',function(e){var trf=e.target.dataset.trf;if(trf===undefined)return;st.transp.from=parseInt(trf,10);bldTrBtns();});

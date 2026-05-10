@@ -352,6 +352,20 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
 
   <!-- Module: Identificador -->
   <div id="comp-mod-ident" style="display:none">
+    <!-- Tuning selector for the identifier fretboard -->
+    <div class="panel" style="margin-bottom:10px;padding:10px 12px">
+      <div class="cl" style="margin-bottom:6px">Afinación de la guitarra</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px" id="comp-ident-presets">
+        <button class="btn bon" data-cit="std">Estándar</button>
+        <button class="btn" data-cit="dropd">Drop D</button>
+        <button class="btn" data-cit="openg">Open G</button>
+        <button class="btn" data-cit="dadgad">DADGAD</button>
+        <button class="btn" data-cit="custom">Personalizada</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center" id="comp-ident-tun-row">
+        <!-- String selects filled by JS, from 6th to 1st -->
+      </div>
+    </div>
     <div style="font-size:10px;color:#3a2e18;margin-bottom:8px">Pulsa cuerdas o teclas para marcar notas. Aparecen sincronizadas en ambos.</div>
     <div class="cl" style="margin-bottom:4px">🎸 Mástil (clic para marcar)</div>
     <div class="fbw"><svg id="comp-ident-fb" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer"></svg></div>
@@ -1357,6 +1371,60 @@ function renderIdent(){
 var PIANO_DOTS={};  // piano instrument identifier dots (pitch class → true)
 var COMP_DOTS={};   // comparador piano dots (oct_pc → true)
 var COMP_FB_DOTS={}; // comparador fretboard dots (string_fret → true)
+var COMP_TUNING=['E','B','G','D','A','E']; // tuning for comp identifier (6th to 1st)
+var COMP_TUNING_PRESETS={
+  std:  ['E','B','G','D','A','E'],
+  dropd:['E','B','G','D','A','D'],
+  openg:['D','B','G','D','G','D'],
+  dadgad:['D','A','G','D','A','D'],
+};
+// Open string MIDI for standard tuning (si=0=E4=64 … si=5=E2=40)
+// Recalculated based on COMP_TUNING when tuning changes
+var COMP_OPEN_MIDI=[64,59,55,50,45,40];
+
+function updateCompOpenMIDI(){
+  // Compute base MIDI for each string given COMP_TUNING
+  // Reference: string 6 (si=5, low E) starts at MIDI 40 in standard tuning
+  // We keep the octave assignment from standard and shift by interval
+  var STD=['E','B','G','D','A','E']; // standard from high to low (si=0..5)
+  var STD_MIDI=[64,59,55,50,45,40];
+  for(var i=0;i<6;i++){
+    var stdPc=N.indexOf(STD[i]);
+    var newPc=N.indexOf(COMP_TUNING[i]);
+    if(newPc<0)newPc=NB.indexOf(COMP_TUNING[i]);
+    if(newPc<0){COMP_OPEN_MIDI[i]=STD_MIDI[i];continue;}
+    var diff=(newPc-stdPc+12)%12;
+    COMP_OPEN_MIDI[i]=STD_MIDI[i]+diff;
+  }
+}
+
+function bldCompIdentTuning(){
+  var row=document.getElementById('comp-ident-tun-row'); if(!row) return;
+  var h='';
+  // Show strings 6→1 (si=5 down to si=0)
+  for(var i=5;i>=0;i--){
+    var opts='';
+    N.forEach(function(n){opts+='<option'+(n===COMP_TUNING[i]?' selected':'')+'>'+n+'</option>';});
+    h+='<div style="display:flex;flex-direction:column;align-items:center;gap:2px">'
+      +'<span style="font-size:9px;color:#5a4a2a">'+(i+1)+'ª</span>'
+      +'<select data-csi="'+i+'" style="height:36px;width:46px;font-size:11px;border:0.5px solid #2d2318;background:#111009;color:#c8b890;border-radius:7px">'+opts+'</select>'
+      +'</div>';
+  }
+  row.innerHTML=h;
+  // Attach change listeners
+  row.querySelectorAll('select').forEach(function(sel){
+    sel.onchange=function(){
+      COMP_TUNING[parseInt(this.dataset.csi,10)]=this.value;
+      // Mark as custom preset
+      document.querySelectorAll('[data-cit]').forEach(function(b){b.classList.remove('bon');});
+      var cb=document.querySelector('[data-cit="custom"]');if(cb)cb.classList.add('bon');
+      COMP_FB_DOTS={};COMP_DOTS={};
+      updateCompOpenMIDI();renderCompIdentPage();
+    };
+  });
+}
+
+
 
 function buildPianoSVG(numOct, dotsObj, onClickCb, svgEl, identMode){
   // identMode=true: no chord/scale background, show only dotsObj dots
@@ -1721,6 +1789,8 @@ function renderCompChords(){
 }
 
 function renderCompIdentPage(){
+  bldCompIdentTuning();
+  updateCompOpenMIDI();
   // Interactive fretboard
   renderCompIdentFB();
   // Interactive piano 7 octaves
@@ -1736,7 +1806,7 @@ function renderCompIdentPage(){
 
 function renderCompIdentFB(){
   var svg=document.getElementById('comp-ident-fb'); if(!svg) return;
-  var compT=['E','B','G','D','A','E'], ns=6, nf=14;
+  var compT=COMP_TUNING, ns=6, nf=14;
   var BH=(ns-1)*FB_SS, OW=58, FW=60;
   var BW=OW+nf*FW, SW=FB_ML+BW+FB_MR, SH=FB_MT+BH+FB_ML;
   function cx(f){return f===0?FB_ML+OW/2:FB_ML+OW+(f-.5)*FW;}
@@ -1779,7 +1849,7 @@ function renderCompIdentFB(){
     var t=e.target; if(!t.classList.contains('citap')) return;
     var si3=parseInt(t.dataset.s,10), f3=parseInt(t.dataset.f,10);
     var fbKey2=si3+'_'+f3;
-    var compT3=['E','B','G','D','A','E'];
+    var compT3=COMP_TUNING;
     var pc3=(N.indexOf(compT3[si3])+f3)%12;
     if(COMP_FB_DOTS[fbKey2]){
       delete COMP_FB_DOTS[fbKey2];
@@ -1793,8 +1863,7 @@ function renderCompIdentFB(){
     } else {
       COMP_FB_DOTS[fbKey2]=true;
       // Sync to piano: compute actual octave from string/fret MIDI
-      var openMIDI=[64,59,55,50,45,40]; // si=0..5 high to low
-      var midi3=openMIDI[si3]+f3;
+      var midi3=COMP_OPEN_MIDI[si3]+f3;
       var pianoOct=Math.floor((midi3-36)/12);
       var pianoKey=pianoOct+'_'+pc3;
       COMP_DOTS[pianoKey]=true; // sync to specific piano key
@@ -1817,7 +1886,7 @@ function updateCompIdentResult(){
   var el=document.getElementById('comp-ident-result'); if(!el) return;
   // Get pitch classes from fretboard positions
   var pcs=[];
-  var compT2=['E','B','G','D','A','E'];
+  var compT2=COMP_TUNING;
   for(var fbk in COMP_FB_DOTS){
     var pts=fbk.split('_'), si=parseInt(pts[0]), f=parseInt(pts[1]);
     var pc=(N.indexOf(compT2[si])+f)%12;
@@ -1887,6 +1956,16 @@ function attachListeners(){
     var mc=document.getElementById('comp-mod-chords'),mi=document.getElementById('comp-mod-ident');
     if(mi)mi.style.display=''; if(mc)mc.style.display='none';
     renderCompIdentPage();
+  });
+  addSafeListener('comp-ident-presets','click',function(e){
+    var b=e.target.closest('[data-cit]'); if(!b) return;
+    var preset=b.dataset.cit;
+    if(COMP_TUNING_PRESETS[preset]){
+      COMP_TUNING=COMP_TUNING_PRESETS[preset].slice();
+      document.querySelectorAll('[data-cit]').forEach(function(btn){btn.classList.toggle('bon',btn.dataset.cit===preset);});
+      COMP_FB_DOTS={};COMP_DOTS={};
+      updateCompOpenMIDI();bldCompIdentTuning();renderCompIdentPage();
+    }
   });
   addSafeListener('cm-clear','click',function(){
     COMP_DOTS={}; COMP_FB_DOTS={};

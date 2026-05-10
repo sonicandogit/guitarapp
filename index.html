@@ -259,8 +259,12 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
 <div class="panel ibar"><div class="cnm" id="nm"></div><div class="chips" id="chips"></div><div id="capo-badge" style="display:none;font-size:10px;color:#5a4a2a;margin-left:auto"></div></div>
 <div class="fbw" id="guitar-fbw"><svg id="fb" xmlns="http://www.w3.org/2000/svg"></svg></div>
 <div id="piano-panel" style="display:none">
-  <div class="fbw"><svg id="piano-wrap" xmlns="http://www.w3.org/2000/svg" style="display:block;cursor:pointer"></svg></div>
-  <div class="fbw-hint">Pulsa teclas para identificar acordes · Pulsa de nuevo para deseleccionar</div>
+  <div class="fbw"><svg id="piano-wrap" xmlns="http://www.w3.org/2000/svg" style="display:block"></svg></div>
+  <div class="fbw-hint">&#x2190; desliza el teclado &#x2192;</div>
+  <div class="cl" style="margin:10px 0 4px;border-top:0.5px solid #1e1810;padding-top:10px">Identificador de acordes</div>
+  <div style="font-size:10px;color:#3a2e18;margin-bottom:6px">Pulsa teclas para marcar notas — pulsa de nuevo para desmarcar</div>
+  <div class="fbw"><svg id="piano-ident-kb" xmlns="http://www.w3.org/2000/svg" style="display:block;cursor:pointer"></svg></div>
+  <div class="fbw-hint">&#x2190; desliza &#x2192;</div>
   <div id="piano-ident" style="margin-top:10px;min-height:40px"></div>
 </div>
 <div class="fbw-hint">&#x2190; desliza el mástil &#x2192;</div>
@@ -520,11 +524,6 @@ function identifyChord(pcArr){
 }
 
 // ── Piano keyboard ────────────────────────────────────────────
-
-function renderPianoPanel(){
-  renderPiano();
-  updatePianoIdent();
-}
 
 function renderFB(){
   if(st.inst===3){renderPianoPanel();return;}
@@ -1381,11 +1380,16 @@ function buildPianoSVG(numOct, dotsObj, onClickCb, svgEl){
 
 // ── Piano instrument (6 octaves) ──────────────────────────────
 function renderPianoPanel(){
-  var svg=document.getElementById('piano-wrap'); if(!svg) return;
-  buildPianoSVG(6, PIANO_DOTS, function(pc,oct){
-    var key=(oct!==null?oct+'_':'')+pc;if(PIANO_DOTS[key])delete PIANO_DOTS[key];else PIANO_DOTS[key]=true;
+  // Main keyboard: chord/scale display only (read-only, no PIANO_DOTS)
+  var svg=document.getElementById('piano-wrap');
+  if(svg) buildPianoSVG(6, null, null, svg);
+  // Identifier keyboard (3 octaves, clickable)
+  var svg2=document.getElementById('piano-ident-kb');
+  if(svg2) buildPianoSVG(3, PIANO_DOTS, function(pc,oct){
+    var key=(oct!==null?oct+'_':'')+pc;
+    if(PIANO_DOTS[key])delete PIANO_DOTS[key]; else PIANO_DOTS[key]=true;
     renderPianoPanel(); updatePianoIdent();
-  }, svg);
+  }, svg2);
   updatePianoIdent();
 }
 
@@ -1486,14 +1490,6 @@ function renderCompFretboard(){
   };
 }
 
-function renderCompPiano(){
-  var svg=document.getElementById('comp-piano'); if(!svg) return;
-  buildPianoSVG(4, COMP_DOTS, function(pc,oct){
-    if(COMP_DOTS[pc]) delete COMP_DOTS[pc]; else COMP_DOTS[pc]=true;
-    renderComp();
-  }, svg);
-}
-
 function renderCompIdent(){
   var el=document.getElementById('comp-ident'); if(!el) return;
   var pcs=Object.keys(COMP_DOTS).map(Number);
@@ -1504,8 +1500,20 @@ function renderCompIdent(){
 
 function renderComp(){
   if(!st.ft.comp) return;
-  try{renderCompFretboard();}catch(e){}
-  try{renderCompPiano();}catch(e){}
+  // Fretboard
+  try{
+    renderCompFretboard();
+  }catch(e){
+    var fb=document.getElementById('comp-fb');
+    if(fb){fb.setAttribute('viewBox','0 0 400 60');fb.style.width='400px';fb.style.height='60px';fb.innerHTML='<text x="10" y="35" fill="#c86040" font-size="12">'+e.message+'</text>';}
+  }
+  // Piano keyboard (4 octaves)
+  try{
+    var svg=document.getElementById('comp-piano'); if(svg) buildPianoSVG(4, COMP_DOTS, function(pc,oct){
+      if(COMP_DOTS[pc]) delete COMP_DOTS[pc]; else COMP_DOTS[pc]=true;
+      renderComp();
+    }, svg);
+  }catch(e){}
   renderCompIdent();
 }
 

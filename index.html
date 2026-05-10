@@ -43,11 +43,15 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
 .metro-grid{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
 .metro-bpm-row{display:flex;align-items:center;gap:8px}
 .metro-bpm-row input[type=range]{width:min(130px,36vw);accent-color:#e8a020}
-/* Instrument selector */
-.inst-sel{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.inst-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;border-radius:10px;cursor:pointer;border:1.5px solid #2d2318;background:#111009;transition:all .15s}
-.inst-btn:active{background:#1c1510}
-.inst-btn.sel{border-color:#b57500;background:#1a1208}
+/* Page navigation */
+.page-nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.pnb{display:flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid #2d2318;background:#111009;color:#7a6a40;font-size:12px;font-family:'IBM Plex Mono',monospace;white-space:nowrap;transition:all .15s;min-height:44px}
+.pnb:active,.pnb.sel{background:#1a1208;border-color:#b57500;color:#e8a020}
+@media(max-width:480px){.pnb{font-size:11px;padding:9px 10px}}
+.comp-mods{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+/* Instrument selector (kept for compatibility) */
+.inst-sel{display:none}
+.inst-btn{display:none}
 .inst-emoji{font-size:26px;line-height:1}
 .inst-name{font-size:11px;color:#c8b890;font-weight:500}
 .inst-btn.sel .inst-name{color:#e8a020}
@@ -209,16 +213,17 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
 </head>
 <body>
 <h1 id="app-title">Composer Pro</h1>
-<p class="sub" id="app-sub">Selecciona tu instrumento</p>
+<nav class="page-nav" id="page-nav">
+  <button class="pnb sel" data-page="guitar">🎸 Guitarra</button>
+  <button class="pnb" data-page="bass">🎸 Bajo</button>
+  <button class="pnb" data-page="uke">🎸 Ukelele</button>
+  <button class="pnb" data-page="piano">🎹 Piano</button>
+  <button class="pnb" data-page="comp">🔀 Comparador</button>
+  <button class="pnb" data-page="util">🔧 Utilidades</button>
+</nav>
+<p class="sub" id="app-sub">GUITARRA</p>
 
-<!-- Selector de instrumento -->
-<div class="inst-sel" id="inst-sel">
-  <div class="inst-btn sel" data-inst="0"><div class="inst-emoji">🎸</div><div class="inst-name">Guitarra</div><div class="inst-tuning">E-B-G-D-A-E</div></div>
-  <div class="inst-btn" data-inst="1"><div class="inst-emoji">🎸</div><div class="inst-name">Bajo</div><div class="inst-tuning">G-D-A-E</div></div>
-  <div class="inst-btn" data-inst="2"><div class="inst-emoji">🪗</div><div class="inst-name">Ukelele</div><div class="inst-tuning">A-E-C-G</div></div>
-  <div class="inst-btn" data-inst="3"><div class="inst-emoji">🎹</div><div class="inst-name">Piano</div><div class="inst-tuning">Teclado</div></div>
-</div>
-
+<div id="page-instrument">
 <!-- Afinación + Cejilla -->
 <div class="row" id="tun-wrap">
   <div class="cg"><div class="cl">Afinación</div><div class="btns" id="tur"></div></div>
@@ -239,17 +244,14 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
 <div class="ftabs" id="ftabs">
   <button class="ft" data-ft="caged" id="tab-caged">CAGED</button>
   <button class="ft" data-ft="para">Esc. paralelas</button>
-  <button class="ft" data-ft="metro">Metrónomo</button>
-  <button class="ft" data-ft="harm">Armonía</button>
   <button class="ft" data-ft="digit" id="tab-digit">Digitación</button>
   <button class="ft" data-ft="ext">Extensiones</button>
-  <button class="ft" data-ft="tuner">Afinador</button>
   <button class="ft" data-ft="cof">Círculo quintas</button>
   <button class="ft" data-ft="prog">Progresiones</button>
   <button class="ft" data-ft="transp">Transpositor</button>
   <button class="ft" data-ft="subs">Sustituciones</button>
-  <button class="ft" data-ft="timer">Temporizador</button>
-  <button class="ft" data-ft="arp" id="tab-arp">Arpegio</button><button class="ft" data-ft="ident">Identificador</button><button class="ft" data-ft="comp">Comparador</button>
+  <button class="ft" data-ft="arp" id="tab-arp">Arpegio</button>
+  <button class="ft" data-ft="ident">Identificador</button>
 </div>
 
 <!-- Panels -->
@@ -268,6 +270,7 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
   <div id="piano-ident" style="margin-top:10px;min-height:40px"></div>
 </div>
 <div class="fbw-hint">&#x2190; desliza el mástil &#x2192;</div>
+</div><!-- end page-instrument -->
 
 <div id="dp-metro" style="display:none"><div class="panel"><div class="metro-grid"><div class="cg"><div class="cl">Tempo</div><div class="metro-bpm-row"><input type="range" min="40" max="240" value="120" id="bsl"><span style="font-size:18px;font-weight:500;min-width:38px;color:#e8a020" id="bdis">120</span></div></div><div class="cg"><div class="cl">Compás</div><div class="btns" id="sigb"></div></div><div class="cg" style="flex:1;min-width:100px"><div class="cl">&nbsp;</div><button class="btn" id="mbt" style="width:100%">&#9658; Iniciar</button></div><div class="cg" style="flex:1;min-width:100px"><div class="cl">&nbsp;</div><button class="btn" id="tap-btn" style="width:100%;border-color:#5a5010;color:#c8c060">&#x1F442; Tap</button></div></div><div class="beats" id="bts"></div><div style="text-align:center;font-size:11px;color:#5a4a2a;margin-top:2px" id="bplbl">120 bpm</div></div></div>
 
@@ -321,18 +324,66 @@ select{height:40px;padding:0 6px;border:0.5px solid #2d2318;background:#111009;c
 </div></div>
 
 
-<div id="dp-comp" style="display:none"><div class="panel">
-  <div class="cl" style="margin-bottom:4px">Comparador Guitarra — Piano</div>
-  <div style="font-size:10px;color:#3a2e18;margin-bottom:8px">El acorde/escala actual se muestra en ambos instrumentos. Pulsa notas para identificar acordes en los dos a la vez.</div>
-  <div class="cl" style="font-size:10px;margin-bottom:4px">🎸 Mástil</div>
-  <div class="fbw"><svg id="comp-fb" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer"></svg></div>
-  <div class="fbw-hint">&#x2190; desliza &#x2192;</div>
-  <div class="cl" style="font-size:10px;margin:10px 0 4px">🎹 Teclado</div>
-  <div class="fbw"><svg id="comp-piano" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer"></svg></div>
-  <div class="fbw-hint">&#x2190; desliza &#x2192; · Pulsa teclas o cuerdas para identificar</div>
-  <div id="comp-ident" style="margin-top:10px;min-height:40px"></div>
-  <button class="btn" id="comp-clear" style="margin-top:6px;font-size:11px">&#x2715; Limpiar selección</button>
-</div></div>
+<div id="page-comp" style="display:none">
+  <!-- Module selector -->
+  <div class="comp-mods">
+    <button class="btn bon" id="cm-chords" data-cm="chords">🎵 Acordes y Escalas</button>
+    <button class="btn" id="cm-ident" data-cm="ident">🔍 Identificador</button>
+    <button class="btn" id="cm-clear" style="margin-left:auto;color:#c86040">✕ Limpiar</button>
+  </div>
+
+  <!-- Shared root/chord/scale controls for comp -->
+  <div class="row" style="margin-top:8px">
+    <div class="cg"><div class="cl">Nota raíz</div><div class="btns" id="comp-rb"></div></div>
+    <div class="cg"><div class="cl" id="comp-tlbl">Acorde</div><div class="btns" id="comp-tb"></div></div>
+    <div class="cg" style="margin-left:auto"><div class="cl">Modo</div><div class="btns" id="comp-mdb"></div></div>
+  </div>
+  <div class="panel ibar" style="margin-bottom:8px"><div class="cnm" id="comp-nm"></div><div class="chips" id="comp-chips"></div></div>
+
+  <!-- Module: Acordes/Escalas -->
+  <div id="comp-mod-chords">
+    <div class="cl" style="margin-bottom:4px">🎸 Guitarra</div>
+    <div class="fbw"><svg id="comp-fb" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="fbw-hint">&#x2190; desliza &#x2192;</div>
+    <div class="cl" style="margin:10px 0 4px">🎹 Piano</div>
+    <div class="fbw"><svg id="comp-piano" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="fbw-hint">&#x2190; desliza &#x2192;</div>
+  </div>
+
+  <!-- Module: Identificador -->
+  <div id="comp-mod-ident" style="display:none">
+    <div style="font-size:10px;color:#3a2e18;margin-bottom:8px">Pulsa cuerdas o teclas para marcar notas. Aparecen sincronizadas en ambos.</div>
+    <div class="cl" style="margin-bottom:4px">🎸 Mástil (clic para marcar)</div>
+    <div class="fbw"><svg id="comp-ident-fb" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer"></svg></div>
+    <div class="fbw-hint">&#x2190; desliza &#x2192;</div>
+    <div class="cl" style="margin:10px 0 4px">🎹 Teclado (clic para marcar)</div>
+    <div class="fbw"><svg id="comp-ident-piano" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer"></svg></div>
+    <div class="fbw-hint">&#x2190; desliza &#x2192;</div>
+    <div id="comp-ident-result" style="margin-top:10px;min-height:40px"></div>
+  </div>
+</div>
+
+<!-- Utilidades -->
+<div id="page-util" style="display:none">
+  <div class="panel">
+    <div class="cl" style="margin-bottom:8px">🥁 Metrónomo</div>
+    <div id="util-metro"></div>
+  </div>
+  <div class="panel" style="margin-top:6px">
+    <div class="cl" style="margin-bottom:8px">🎵 Armonía</div>
+    <div id="util-harm"></div>
+  </div>
+  <div class="panel" style="margin-top:6px">
+    <div class="cl" style="margin-bottom:8px">🎙️ Afinador</div>
+    <div id="util-tuner"></div>
+  </div>
+  <div class="panel" style="margin-top:6px">
+    <div class="cl" style="margin-bottom:8px">⏱️ Temporizador</div>
+    <div id="util-timer"></div>
+  </div>
+</div>
+
+
 
 <script>
 // ── Datos ─────────────────────────────────────────────────────
@@ -437,7 +488,8 @@ var st = {
   metro:{bpm:120,sig:4,beat:0,actx:null},
   ft:{caged:false,para:false,metro:false,harm:false,digit:false,ext:false,tuner:false,cof:false,prog:false,transp:false,subs:false,timer:false,arp:false,ident:false,comp:false},
   harm:{root:0,mode:0}, prog:{key:0,mode:0,slots:[],playing:false,step:0,beats:2},
-  transp:{from:0,to:7}, subs:{key:0,mode:0}, arp:{sel:0},ident:{dots:{}}
+  transp:{from:0,to:7}, subs:{key:0,mode:0}, arp:{sel:0},ident:{dots:{}},
+  page:'guitar',comp:{module:'chords'},
 };
 
 function gI()  { return st.mode===0?CH[CH_KEYS[st.ct]]:SC[SC_KEYS[st.sc]]; }
@@ -1518,8 +1570,290 @@ function renderComp(){
 }
 
 
-function rAll(){renderFB();renderInfo();if(st.ft.caged&&instCfg().showCaged)renderCaged();if(st.ft.harm)renderHarm();if(st.ft.digit)renderDigit();if(st.ft.ext)renderExt();if(st.ft.tuner){bldTunerStrings();updateTunerTarget();}if(st.ft.cof)renderCOF();if(st.ft.prog){bldProgBeatsBtns();renderProg();}if(st.ft.subs)renderSubs();if(st.ft.arp)renderArp();if(st.ft.ident)renderIdent();if(st.ft.comp)renderComp();}
+// ── Page navigation ────────────────────────────────────────────
+var PAGE_INST={'guitar':0,'bass':1,'uke':2,'piano':3};
+var PAGE_NAMES={'guitar':'GUITARRA','bass':'BAJO','uke':'UKELELE','piano':'PIANO','comp':'COMPARADOR','util':'UTILIDADES'};
+
+// Tabs visible per instrument page
+var PAGE_TABS={
+  guitar:['caged','para','digit','ext','cof','prog','transp','subs','arp','ident'],
+  bass:  ['para','ext','cof','prog','transp','subs','arp'],
+  uke:   ['para','digit','ext','cof','prog','transp','subs','arp','ident'],
+  piano: ['ext','cof','prog','transp','subs','ident']
+};
+
+function switchPage(page){
+  st.page=page;
+  // Update nav buttons
+  document.querySelectorAll('.pnb').forEach(function(b){
+    b.classList.toggle('sel', b.dataset.page===page);
+  });
+  // Show/hide main sections
+  var isInst=PAGE_INST[page]!==undefined;
+  document.getElementById('page-instrument').style.display=isInst?'':'none';
+  document.getElementById('page-comp').style.display=page==='comp'?'':'none';
+  document.getElementById('page-util').style.display=page==='util'?'':'none';
+  // Update subtitle
+  document.getElementById('app-sub').textContent=PAGE_NAMES[page]||page.toUpperCase();
+  // If instrument page: switch instrument
+  if(isInst){
+    var instIdx=PAGE_INST[page];
+    // Switch instrument without closing all tabs - just update display
+    var cfg=INSTRUMENTS[instIdx];
+    var wasInst=st.inst;
+    st.inst=instIdx;
+    st.t=cfg.defaultTuning.slice();
+    st.capo=0;
+    st.caged.sel=-1;
+    PIANO_DOTS={};
+    // Show/hide instrument-specific controls
+    var isPiano=instIdx===3;
+    document.getElementById('tun-wrap').style.display=isPiano?'none':'';
+    document.getElementById('preset-wrap').style.display=isPiano?'none':'';
+    document.getElementById('guitar-fbw').style.display=isPiano?'none':'block';
+    document.getElementById('piano-panel').style.display=isPiano?'block':'none';
+    document.getElementById('capo-wrap').style.display=cfg.showCaged?'':'none';
+    // Show/hide ftabs
+    var allowed=PAGE_TABS[page]||[];
+    document.querySelectorAll('.ft[data-ft]').forEach(function(b){
+      var ft=b.getAttribute('data-ft');
+      b.style.display=allowed.indexOf(ft)>=0?'':'none';
+    });
+    // Close panels not in this page's tabs
+    Object.keys(st.ft).forEach(function(k){
+      if(st.ft[k]&&allowed.indexOf(k)<0){
+        st.ft[k]=false;
+        var b=document.querySelector('[data-ft="'+k+'"]');if(b)b.classList.remove('on');
+        var d=document.getElementById('dp-'+k);if(d)d.style.display='none';
+      }
+    });
+    // Rebuild UI
+    if(!isPiano){bldTun();bldCapo();renderPresets();}
+    else{if(wasInst!==3)PIANO_DOTS={};}
+    bldRoot();bldTypes();bldMode();
+    if(instIdx===1){document.getElementById('arp-sub').textContent='Notas del arpegio sobre el mástil';}
+    else if(instIdx===2){document.getElementById('arp-sub').textContent='p=pulgar i=índice m=corazón · cuerdas 4→1';}
+    else if(!isPiano){document.getElementById('arp-sub').textContent='p=pulgar i=índice m=corazón a=anular · cuerdas 6→1';}
+    stopMet();stopTuner();
+    rAll();
+  } else if(page==='comp'){
+    // Close all instrument tabs
+    Object.keys(st.ft).forEach(function(k){
+      if(st.ft[k]){st.ft[k]=false;var b=document.querySelector('[data-ft="'+k+'"]');if(b)b.classList.remove('on');var d=document.getElementById('dp-'+k);if(d)d.style.display='none';}
+    });
+    stopMet();stopTuner();
+    renderCompPage();
+  } else if(page==='util'){
+    Object.keys(st.ft).forEach(function(k){
+      if(st.ft[k]){st.ft[k]=false;var b=document.querySelector('[data-ft="'+k+'"]');if(b)b.classList.remove('on');var d=document.getElementById('dp-'+k);if(d)d.style.display='none';}
+    });
+    renderUtilPage();
+  }
+}
+
+// ── Comparador page ────────────────────────────────────────────
+var COMP_MODULE='chords'; // 'chords' or 'ident'
+
+function renderCompPage(){
+  // Sync root/chord controls
+  bldCompControls();
+  if(COMP_MODULE==='chords') renderCompChords();
+  else renderCompIdentPage();
+}
+
+function bldCompControls(){
+  // Root buttons
+  var rb=document.getElementById('comp-rb');
+  if(!rb)return;
+  rb.innerHTML='';
+  N.forEach(function(n,i){
+    var b=document.createElement('button');
+    b.className='btn'+(i===st.root?' bon':'');
+    b.textContent=n; b.dataset.cr=i;
+    rb.appendChild(b);
+  });
+  // Mode buttons
+  var mb=document.getElementById('comp-mdb');
+  if(mb){
+    mb.innerHTML='<button class="btn'+(st.mode===0?' bon':'')+'" data-cmode="0">Acorde</button>'
+               +'<button class="btn'+(st.mode===1?' bon':'')+'" data-cmode="1">Escala</button>';
+  }
+  // Type buttons
+  var tb=document.getElementById('comp-tb');
+  var tl=document.getElementById('comp-tlbl');
+  if(!tb)return;
+  var keys=st.mode===0?CH_KEYS:SC_KEYS;
+  if(tl) tl.textContent=st.mode===0?'Acorde':'Escala';
+  tb.innerHTML='';
+  keys.forEach(function(k,i){
+    var idx=st.mode===0?i:i;
+    var b=document.createElement('button');
+    b.className='btn'+(((st.mode===0?st.ct:st.sc)===idx)?' bon':'');
+    b.textContent=k; b.dataset.ctype=idx; b.dataset.mode=st.mode;
+    tb.appendChild(b);
+  });
+  // Chord name display
+  var nm=document.getElementById('comp-nm');
+  var chips=document.getElementById('comp-chips');
+  if(nm) nm.textContent=N[st.root]+(st.mode===0?CH_SYM[CH_KEYS[st.ct]]||'':' '+SC_KEYS[st.sc]);
+  if(chips) chips.innerHTML=buildChips();
+}
+
+function buildChips(){
+  var ivs=gI(); var h='';
+  for(var i=0;i<ivs.length;i++){
+    var pc=(st.root+ivs[i])%12;
+    h+='<span class="chip" style="background:'+IC[ivs[i]]+'20;border:1px solid '+IC[ivs[i]]+'40;color:'+IC[ivs[i]]+'">'
+      +'<span style="font-size:9px">'+IN[ivs[i]]+'</span> '+N[pc]+'</span>';
+  }
+  return h;
+}
+
+function renderCompChords(){
+  // Fretboard
+  try{renderCompFretboard();}catch(e){}
+  // Piano 6 octaves
+  try{
+    var svg=document.getElementById('comp-piano');
+    if(svg) buildPianoSVG(6, null, null, svg);
+  }catch(e){}
+}
+
+function renderCompIdentPage(){
+  // Interactive fretboard
+  renderCompIdentFB();
+  // Interactive piano 7 octaves
+  try{
+    var svg=document.getElementById('comp-ident-piano');
+    if(svg) buildPianoSVG(7, COMP_DOTS, function(pc){
+      if(COMP_DOTS[pc]) delete COMP_DOTS[pc]; else COMP_DOTS[pc]=true;
+      renderCompIdentAll();
+    }, svg);
+  }catch(e){}
+  updateCompIdentResult();
+}
+
+function renderCompIdentFB(){
+  var svg=document.getElementById('comp-ident-fb'); if(!svg) return;
+  var compT=['E','B','G','D','A','E'], ns=6, nf=14;
+  var BH=(ns-1)*FB_SS, OW=58, FW=60;
+  var BW=OW+nf*FW, SW=FB_ML+BW+FB_MR, SH=FB_MT+BH+FB_ML;
+  function cx(f){return f===0?FB_ML+OW/2:FB_ML+OW+(f-.5)*FW;}
+  function sy(s){return FB_MT+s*FB_SS;}
+  var ivs=gI(), ri=st.root;
+  var h='<defs><filter id="glF"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+  h+='<rect x="'+FB_ML+'" y="'+FB_MT+'" width="'+BW+'" height="'+BH+'" fill="#17110a" rx="2"/>';
+  var marks=[3,5,7,9,12];
+  for(var mi=0;mi<marks.length;mi++){var mm=marks[mi];var mc=cx(mm),mcy=FB_MT+BH/2;if(mm===12){h+='<circle cx="'+mc+'" cy="'+(mcy-12)+'" r="4" fill="#231a0d"/><circle cx="'+mc+'" cy="'+(mcy+12)+'" r="4" fill="#231a0d"/>';}else h+='<circle cx="'+mc+'" cy="'+mcy+'" r="4" fill="#231a0d"/>';}
+  h+='<line x1="'+(FB_ML+OW)+'" y1="'+FB_MT+'" x2="'+(FB_ML+OW)+'" y2="'+(FB_MT+BH)+'" stroke="#c4a070" stroke-width="4"/>';
+  for(var fi=1;fi<=nf;fi++){var fx=FB_ML+OW+fi*FW;h+='<line x1="'+fx+'" y1="'+FB_MT+'" x2="'+fx+'" y2="'+(FB_MT+BH)+'" stroke="#5a4528" stroke-width="1.4" opacity=".7"/>';}
+  h+='<line x1="'+FB_ML+'" y1="'+FB_MT+'" x2="'+(FB_ML+BW)+'" y2="'+FB_MT+'" stroke="#2e1f0f" stroke-width="1"/>';
+  h+='<line x1="'+FB_ML+'" y1="'+(FB_MT+BH)+'" x2="'+(FB_ML+BW)+'" y2="'+(FB_MT+BH)+'" stroke="#2e1f0f" stroke-width="1"/>';
+  for(var mi2=0;mi2<marks.length;mi2++)h+='<text x="'+cx(marks[mi2])+'" y="'+(FB_MT-8)+'" text-anchor="middle" font-size="10" fill="#5a3e20">'+marks[mi2]+'</text>';
+  h+='<text x="'+cx(0)+'" y="'+(FB_MT-8)+'" text-anchor="middle" font-size="9" fill="#3a2810">0</text>';
+  for(var si=0;si<ns;si++){var ssy=sy(si),th=0.7+(ns-1-si)*.28/(ns-1)*1.5,sc=si===0?'#dcd0a0':si===ns-1?'#b8a050':'#c8b868';h+='<line x1="'+FB_ML+'" y1="'+ssy+'" x2="'+(FB_ML+BW)+'" y2="'+ssy+'" stroke="'+sc+'" stroke-width="'+th+'" opacity=".9"/>';h+='<text x="'+(FB_ML-6)+'" y="'+(ssy+3.5)+'" text-anchor="end" font-size="9" fill="#4a3020">'+(si+1)+'</text>';h+='<text x="'+(FB_ML-6)+'" y="'+(ssy+13)+'" text-anchor="end" font-size="8" fill="#321e08">'+compT[si]+'</text>';}
+  // Chord/scale notes + COMP_DOTS overlay + hit areas
+  for(var si2=0;si2<ns;si2++){
+    var y2=sy(si2),sNI=N.indexOf(compT[si2]);
+    for(var f=0;f<=nf;f++){
+      var pc=(sNI+f)%12;
+      var iv=(pc-ri+12)%12;
+      var inCh=ivs.indexOf(iv)>=0;
+      var isId=!!COMP_DOTS[pc];
+      var cx2=cx(f);
+      if(inCh){var col=IC[iv],isR=iv===0,r=isR?12:11;if(isR)h+='<circle cx="'+cx2+'" cy="'+y2+'" r="'+(r+5)+'" fill="'+col+'" opacity=".15"/>';h+='<circle cx="'+cx2+'" cy="'+y2+'" r="'+r+'" fill="'+col+'" opacity="'+(isId?.4:.83)+'" filter="'+(isR?'url(#glF)':'none')+'"/>';if(!isId){var lbl=IN[iv],fs=lbl.length>1?7:9;h+='<text x="'+cx2+'" y="'+(y2+fs*.4)+'" text-anchor="middle" font-size="'+fs+'" font-weight="bold" fill="'+(isR?'#1a0e00':'#fff')+'">'+lbl+'</text>';}}
+      if(isId){h+='<circle cx="'+cx2+'" cy="'+y2+'" r="13" fill="#e8a020" opacity=".9"/>';h+='<circle cx="'+cx2+'" cy="'+y2+'" r="13" fill="none" stroke="#fff" stroke-width="1.5" opacity=".4"/>';h+='<text x="'+cx2+'" y="'+(y2+4)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#1a0e00">'+N[pc]+'</text>';}
+      // Hit area (always on top)
+      var FW2=60;
+      h+='<rect x="'+(f===0?FB_ML:cx2-FW2/2)+'" y="'+(y2-FB_SS/2)+'" width="'+FW2+'" height="'+FB_SS+'" fill="transparent" data-pc="'+pc+'" class="citap"/>';
+    }
+  }
+  svg.setAttribute('viewBox','0 0 '+SW+' '+SH);
+  svg.style.width=SW+'px'; svg.style.height=SH+'px';
+  svg.innerHTML=h;
+  svg.onclick=function(e){
+    var t=e.target; if(!t.classList.contains('citap')) return;
+    var pc=parseInt(t.dataset.pc,10);
+    if(COMP_DOTS[pc]) delete COMP_DOTS[pc]; else COMP_DOTS[pc]=true;
+    renderCompIdentAll();
+  };
+}
+
+function renderCompIdentAll(){
+  renderCompIdentFB();
+  var svg=document.getElementById('comp-ident-piano');
+  if(svg) buildPianoSVG(7, COMP_DOTS, function(pc){
+    if(COMP_DOTS[pc]) delete COMP_DOTS[pc]; else COMP_DOTS[pc]=true;
+    renderCompIdentAll();
+  }, svg);
+  updateCompIdentResult();
+}
+
+function updateCompIdentResult(){
+  var el=document.getElementById('comp-ident-result'); if(!el) return;
+  var pcs=Object.keys(COMP_DOTS).map(Number);
+  el.innerHTML=buildIdentHTML(pcs);
+  var clr=el.querySelector('#ident-clr-btn');
+  if(clr) clr.onclick=function(){COMP_DOTS={};renderCompIdentAll();};
+}
+
+// ── Utilidades page ────────────────────────────────────────────
+function renderUtilPage(){
+  // Render metro, harm, tuner, timer into util containers
+  var um=document.getElementById('util-metro');
+  if(um) um.innerHTML=document.getElementById('dp-metro')?document.getElementById('dp-metro').querySelector('.panel').innerHTML:'';
+  var uh=document.getElementById('util-harm');
+  if(uh) uh.innerHTML=document.getElementById('dp-harm')?document.getElementById('dp-harm').querySelector('.panel').innerHTML:'';
+  var ut=document.getElementById('util-tuner');
+  if(ut) ut.innerHTML=document.getElementById('dp-tuner')?document.getElementById('dp-tuner').querySelector('.panel').innerHTML:'';
+  var uti=document.getElementById('util-timer');
+  if(uti) uti.innerHTML=document.getElementById('dp-timer')?document.getElementById('dp-timer').querySelector('.panel').innerHTML:'';
+}
+
+
+function rAll(){if(st.page==='comp'){renderCompPage();return;}if(st.page==='util')return;renderFB();renderInfo();if(st.ft.caged&&instCfg().showCaged)renderCaged();if(st.ft.harm)renderHarm();if(st.ft.digit)renderDigit();if(st.ft.ext)renderExt();if(st.ft.tuner){bldTunerStrings();updateTunerTarget();}if(st.ft.cof)renderCOF();if(st.ft.prog){bldProgBeatsBtns();renderProg();}if(st.ft.subs)renderSubs();if(st.ft.arp)renderArp();if(st.ft.ident)renderIdent();if(st.ft.comp)renderComp();}
 function attachListeners(){
+  // ── Page navigation ──────────────────────────────────────────
+  document.getElementById('page-nav').addEventListener('click',function(e){
+    var b=e.target.closest('.pnb'); if(!b) return;
+    switchPage(b.dataset.page);
+  });
+  // Comparador controls
+  document.getElementById('comp-rb').addEventListener('click',function(e){
+    var cr=e.target.dataset.cr; if(cr===undefined) return;
+    st.root=parseInt(cr,10); bldCompControls(); renderCompPage();
+  });
+  document.getElementById('comp-tb').addEventListener('click',function(e){
+    var ct=e.target.dataset.ctype; if(ct===undefined) return;
+    if(parseInt(e.target.dataset.mode,10)===0) st.ct=parseInt(ct,10);
+    else st.sc=parseInt(ct,10);
+    bldCompControls(); renderCompPage();
+  });
+  document.getElementById('comp-mdb').addEventListener('click',function(e){
+    var cm=e.target.dataset.cmode; if(cm===undefined) return;
+    st.mode=parseInt(cm,10); bldCompControls(); renderCompPage();
+  });
+  document.getElementById('cm-chords').addEventListener('click',function(){
+    COMP_MODULE='chords';
+    document.getElementById('cm-chords').classList.add('bon');
+    document.getElementById('cm-ident').classList.remove('bon');
+    document.getElementById('comp-mod-chords').style.display='';
+    document.getElementById('comp-mod-ident').style.display='none';
+    renderCompChords();
+  });
+  document.getElementById('cm-ident').addEventListener('click',function(){
+    COMP_MODULE='ident';
+    document.getElementById('cm-ident').classList.add('bon');
+    document.getElementById('cm-chords').classList.remove('bon');
+    document.getElementById('comp-mod-ident').style.display='';
+    document.getElementById('comp-mod-chords').style.display='none';
+    renderCompIdentPage();
+  });
+  document.getElementById('cm-clear').addEventListener('click',function(){
+    COMP_DOTS={}; PIANO_DOTS={};
+    renderCompPage();
+    renderPianoPanel();
+  });
   // Instrument selector
   document.getElementById('inst-sel').addEventListener('click',function(e){var b=e.target.closest('[data-inst]');if(!b)return;switchInst(parseInt(b.getAttribute('data-inst'),10));});
   // Presets
@@ -1584,7 +1918,7 @@ function attachTunListeners(){
 
 // ── Init ──────────────────────────────────────────────────────
 bldTun();bldCapo();bldMode();bldRoot();bldTypes();bldSig();rBeats();renderPresets();
-attachListeners();rAll();
+attachListeners();switchPage('guitar');
 </script>
 </body>
 </html>
